@@ -427,7 +427,225 @@ print("\n")
                                                     #MANY TO MANY - ADDITIONAL COLUMNS
 #######################################################################################################################################
 
-#
+#Create table esmartdata_membership
+cur.executescript('''DROP TABLE IF EXISTS "esmartdata_membership";
+CREATE TABLE IF NOT EXISTS "esmartdata_membership" (
+  "id" integer NOT NULL,
+  "created" text NOT NULL,
+  "course_id" integer NOT NULL,
+  "learningpath_id" integer NOT NULL,
+  FOREIGN KEY("course_id") 
+  REFERENCES "esmartdata_course"("id"),
+  FOREIGN KEY("learningpath_id") 
+  REFERENCES "esmartdata_learningpath"("id"),
+  PRIMARY KEY("id" AUTOINCREMENT)
+);''')
+
+#Use script load_membership.sql to load the data into the esmartdata_learningpath and esmartdata_membership
+with open('load_membership.sql', 'r', encoding='utf-8') as file:
+    sql = file.read()
+
+cur.executescript(sql)
+
+#Extract information about the courses belonging to the paths, wich were added from 2021-02-01 to 2021-03-31 (YYYY-MM-DD)
+#Query that extract
+#created column from the esmartdata_membership table
+#title column from the esmartdata_course table
+cur.execute('''SELECT
+  t1.created,
+  t2.title
+FROM
+  "esmartdata_membership" AS t1
+  LEFT JOIN "esmartdata_course" AS t2 ON t1.course_id = t2.id
+WHERE
+  t1.created BETWEEN "2021-02-01" AND "2021-03-31"''')
+
+for row in cur.fetchall():
+    print(row)
+print("\n")
+
+#From esmartdata_membership table, extract the month number and assign in to the "month" column. Also extract the symbol representing the quarter
+#('Q1','Q2','Q3','Q4') and assign it to the column "quarter"
+#created column from the table esmartdata_membership
+#month column with the month number
+#quarter column with the symbol of the quarter
+#use SELECT CASE statement
+#%m month %d day
+cur.execute('''SELECT "created",
+    CAST(strftime("%m", created) AS INTEGER) AS "month",
+    CASE
+        WHEN CAST(strftime("%m", "created") AS INTEGER)
+            BETWEEN 0 AND 2 THEN
+            "Q1"
+        WHEN CAST(strftime("%m", "created") AS INTEGER)
+            BETWEEN 3 AND 5 THEN
+            "Q2"
+        WHEN CAST(strftime("%m", "created") AS INTEGER)
+            BETWEEN 6 AND 8 THEN
+            "Q3"
+        WHEN CAST(strftime("%m", "created") AS INTEGER)
+            BETWEEN 9 AND 11 THEN
+            "Q4"
+    END AS "quarter"
+FROM "esmartdata_membership"''')
+
+for row in cur.fetchall():
+    print(row)
+print("\n")
+
+#From esmartdata_membership table, extract a symbol representing the quarter 'Q1', 'Q2', 'Q3', 'Q4' and assign it to the colum "quarter"
+#Group the data by quarter and count the number of all courses for each quarter and assign it to the "num_courses" column.
+#Outpu
+#quarter column with the symbol of the quarter
+#num_courses column with the number of courses in a given quarter
+#Use select case statement solution
+cur.execute('''SELECT 
+CASE
+    WHEN CAST(strftime("%m", "created") AS INTEGER)
+        BETWEEN 0 AND 2 THEN
+        "Q1"
+    WHEN CAST(strftime("%m", "created") AS INTEGER)
+        BETWEEN 3 AND 5 THEN
+        "Q2"
+    WHEN CAST(strftime("%m", "created") AS INTEGER)
+        BETWEEN 6 AND 8 THEN
+        "Q3"
+    WHEN CAST(strftime("%m", "created") AS INTEGER)
+        BETWEEN 9 AND 11 THEN
+        "Q4"
+END AS "quarter",
+COUNT(*) AS "num_courses"
+FROM "esmartdata_membership"
+GROUP BY "quarter"''')
+
+for row in cur.fetchall():
+    print(row)
+print("\n")
+
+#######################################################################################################################################
+                                                    #DML - DATA MANIPULATION LENGUAGE
+#######################################################################################################################################
+#From esmartdata_instructor inser a new record with the following data
+#(3, "Mike", "Json", "Python Developer")
+#cur.execute('''INSERT INTO "esmartdata_instructor"
+#(
+#    "id",
+#    "first_name",
+#    "last_name",
+#    "description"
+#)
+#VALUES
+#(
+#    3,
+#    "Mike",
+#    "Json",
+#    "Python Developer"
+#)''')
+#cur.execute('''SELECT * FROM "esmartdata_instructor"''')
+
+#for row in cur.fetchall():
+#    print(row)
+#print("\n")
+
+#From esmartdata_instructor, insert another record using the following tuple:
+#record = (3, 'Mike', 'Json', 'Python Developer')
+#You shouldn't assemble query using Python's string operations, because doing so is insecure. It makes program vulnerable to an SQL injection attack.
+#Instead use the DB-API's parameter substitution. Put a placeholder ? wherever you want to use a value, and the provide a tuple of values as the second
+#argument to the cursor's execute() method
+#record = (3, 'Mike', 'Json', 'Python Developer')
+
+#cur.execute('''INSERT INTO "esmartdata_instructor"
+#(
+#    "id",
+#    "first_name",
+#    "last_name",
+#    "description"
+#)
+#VALUES
+#  (?, ?, ?, ?)''', record)
+
+#cur.execute('''SELECT * FROM "esmartdata_instructor"''')
+
+#for row in cur.fetchall():
+#    print(row)
+#print("\n")
+
+#From esmartdata_instructor, insert two records using the following list of tuples:
+#records = [(3, 'Mike', 'Json', 'Python Developer'),(4, 'Jonathan', 'Parquet', 'Software Engineer')]
+#Dont use python's string operations, makes it vulnerable, to an SQL injection attack, instead use the DB-API's parameter substitution.
+#Put a placeholder ? wherever you want to use a value, and then provide a list of tuples as the second argumento to the cursor's use executemany() method
+#records = [
+#    (3, 'Mike', 'Json', 'Python Developer'),
+#    (4, 'Jonathan', 'Parquet', 'Software Engineer'),
+#]
+
+#cur.executemany('''INSERT INTO "esmartdata_instructor"
+#(
+#    "id",
+#    "first_name",
+#    "last_name",
+#    "description"
+#)
+#VALUES
+#  (?, ?, ?, ?)''', records)
+
+#cur.execute('''SELECT * FROM "esmartdata_instructor"''')
+#for row in cur.fetchall():
+#    print(row)
+#print("\n")
+
+#From esmartdata_instructor, insert another record using the dictionary below:
+#record = { 'id': 3, 'first_name': 'Mike', 'last_name': 'Json', 'description': 'Software Engineer'}
+#You shouldn't assemble your query using Python's string operations because doing so is insecure. It makes program vulnerable to an SQL injection attack
+#Use DB-API's paramter sustitution. An SQL statement may use one of two kinds of placeholders: question marks (qmark style) or named placeholders (named style)
+#For the named style, it can be for example a dict instance. If a dict is given, it must contain keys for all named parameters. Put all named parameters
+#wherever you want to use a value, and then provide a dict as the second argument to the cursor's execute() methods
+record = {
+    'id': 3,
+    'first_name': 'Mike',
+    'last_name': 'Json',
+    'description': 'Software Engineer'
+}
+
+cur.execute('''INSERT INTO "esmartdata_instructor" 
+(
+    "id", 
+    "first_name", 
+    "last_name", 
+    "description"
+)
+VALUES
+(
+    :id, 
+    :first_name, 
+    :last_name, 
+    :description
+)''', record)
+
+conn.commit()
+
+cur.execute('''SELECT * FROM "esmartdata_instructor"''')
+
+for row in cur.fetchall():
+    print(row)
+print("\n")
+
+#######################################################################################################################################
+                                                    #SQL INJECTION
+#######################################################################################################################################
+
+#When we working with databases, we will often want to use the values of variables in our queries. This is going to show you how not to do it.
+#From esmartdata_instructor, use the appropiate command, to display all data for the instructor with the following instructor_id
+#instructor_id = 2
+instructor_id = 2
+
+cur.execute(
+    f'SELECT * FROM "esmartdata_instructor" WHERE "id" = {instructor_id}'
+)
+
+for row in cur.fetchall():
+    print(row)
+print("\n")
 
 
 
