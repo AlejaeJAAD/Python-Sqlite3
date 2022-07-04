@@ -647,15 +647,98 @@ for row in cur.fetchall():
     print(row)
 print("\n")
 
+#From esmartdata_instructor
+#Query cur.execute(f'SELECT * FROM "esmartdata_instructor" WHERE "id" = {instructor_id}')
+#We get the value of the instructor_id variable from the user. A picky user passed the following value for the instructor_id variable:
+#instructor_id = '2; DELETE FROM "esmartdata_instructor"'
+#Execute this query. Then in response, display the number of records in the "esmartdata_instructor" table and print to the console
+#Note that the user of our application can make queries on our database. In particular, queries that may be irreversible (deletion of data)
+#Not secure solution (It's vulnerable) EXPOSED TO INJECTION ATTACKS.
+#instructor_id = '3; DELETE FROM "esmartdata_instructor"'
 
+#cur.executescript(
+#    f'SELECT * FROM "esmartdata_instructor" WHERE "id" = {instructor_id}'
+#)
+#conn.commit()
 
+#cur.execute('SELECT COUNT(*) FROM "esmartdata_instructor"')
+#num_rows = cur.fetchall()[0][0]
+#print(num_rows)
+#print("\n")
 
+#Transform the following query
+#'''SELECT * FROM "esmartdata_instructor" WHERE id = {instructor_id}'''
+#So that it is not exposed to SQL Injection attacks. Use question marks (qmark style) placeholders in the solution
+cur.execute(
+    'SELECT * FROM "esmartdata_instructor" WHERE "id" = ?',
+    (instructor_id,),
+)
 
+for row in cur.fetchall():
+    print(row)
+print("\n")
 
+#From esmartdata_instructor, we have instructor_id variable:
+#instructor_id = 2
+#Transform the following query
+#'''SELECT * FROM "esmartdata_instructor" WHERE id = {instructor_id}'''
+#So that it is not exposed to SQL Injection attacks. Use named placeholders (named style) in the solution
+cur.execute(
+    'SELECT * FROM "esmartdata_instructor" WHERE "id" = :instructor_id',
+    {'instructor_id': instructor_id},
+)
 
+for row in cur.fetchall():
+    print(row)
+print("\n")
 
+#Implement a function named inser_row() that takes four arguments:
+#id, first_name, last_name, description
+#and inserts a record with these values into the table "esmartdata_instructor". Remember that your code should not be exposed to SQL Injection attacks.
+#Use named placeholders in your solution
+#Then call inser_row() function and insert the following records:
+#3, 'Mike', 'Json', 'Software Developer'
+#4, 'Jonathan', 'Parquet', 'SQL Developer'
+#Commit the changes and print all the records from the table "esmartdata_instructor" to the console
+def insert_row(first_name, last_name, description):
+    record = {
+        #'id': id,
+        'first_name': first_name,
+        'last_name': last_name,
+        'description': description
+    }
+    cur.execute('''INSERT INTO "esmartdata_instructor" 
+    (
+        "first_name", 
+        "last_name", 
+        "description"
+    )
+    VALUES
+    ( 
+        :first_name, 
+        :last_name, 
+        :description
+    )''', record)
 
+#insert_row(3, 'Mike', 'Json', 'Software Developer')
+#id = input("Ingresa ID: ")
+first_name = input("Ingresa nombre(S): ")
+last_name = input("Ingresa apellido(S): ")
+description = input("Ingresa ocupacion: ")
 
+insert_row(first_name, last_name, description)
+conn.commit()
 
+cur.execute('''SELECT * FROM "esmartdata_instructor"''')
+
+for row in cur.fetchall():
+    print(row)
+print("\n")
+
+#######################################################################################################################################
+                                                    #MINI PROJECT - COMPANY
+#######################################################################################################################################
+
+#
 
 conn.close()
