@@ -503,4 +503,150 @@ df = pd.DataFrame(data=cur.fetchall(), columns=columns)
 df = df.set_index('id')
 print(df)
 
+#######################################################################################################################################
+                                                    #DML - DATA MANIPULATION LANGUAGE
+#######################################################################################################################################
+#Add a column named is_banned to the "app_user" table with an integer data type and a default value of 0. The is_banned column shows wheter the user is
+#banned or not. Since SQLite doesn't have a separate data type for boolean values (TRUE / FALSE) we use a integer
+#(0 means false, 1 means true)
+#print the first ten records of the "app_user"
+cur.execute('''ALTER TABLE "app_user" 
+ADD COLUMN "is_banned" INTEGER DEFAULT 0''')
+conn.commit()
+
+cur.execute('''SELECT * FROM "app_user" LIMIT 10''')
+
+for row in cur.fetchall():
+    print(row)
+print("\n")
+
+#Rename the table "app_group_user" to "app_membership"
+#Print to the console a list with all table names starting with "app", sorted alphabetically
+cur.execute(
+    '''DROP TABLE IF EXISTS "app_membership"'''
+)
+cur.execute(
+    '''ALTER TABLE "app_group_user" RENAME TO "app_membership"'''
+)
+conn.commit()
+
+cur.execute(
+    '''SELECT "name" FROM "sqlite_master" WHERE "type" = "table"'''
+)
+table_names = [
+    item[0]
+    for item in cur.fetchall()
+    if item[0].startswith('app')
+]
+
+table_names.sort()
+print(table_names)
+print("\n")
+
+#In the "app_user" table for the id = 10, update the email address (email column) to "terry@esmartdata.org"
+#Print the first fifteen records of the "app_user" table
+cur.execute(
+    '''UPDATE "app_user" SET "email" = "terry@esmartdata.org" 
+WHERE "id" = 10'''
+)
+conn.commit()
+
+cur.execute('''SELECT * FROM "app_user" LIMIT 15''')
+
+for row in cur.fetchall():
+    print(row)
+print("\n")
+
+#In the "app_user" table for the id = 5, update the country (country column) to "France" and city (city column) to "Paris"
+#Print first ten records of the "app_user"
+cur.execute('''UPDATE
+  "app_user"
+SET
+  "country" = "France",
+  "city" = "Paris"
+WHERE
+  "id" = 5''')
+conn.commit()
+
+cur.execute('''SELECT * FROM "app_user" LIMIT 10''')
+
+for row in cur.fetchall():
+    print(row)
+print("\n")
+
+#A column named is_banned was added to the "app_user" table with a integer data type and a default value 0. The is_banned column shows wheter the user is banned or not.
+#Block users with id = 8 and id = 36 (set the value in the is_banned column to 1).
+#Print all the banned users from the "app_user" table
+#cur.execute(
+#    '''ALTER TABLE "app_user" ADD COLUMN "is_banned" INTEGER DEFAULT 0'''
+#)
+cur.execute(
+    '''UPDATE "app_user" SET "is_banned" = 1 WHERE "id" IN (8, 36)'''
+)
+conn.commit()
+
+cur.execute('''SELECT * FROM "app_user" WHERE "is_banned"''')
+
+for row in cur.fetchall():
+    print(row)
+print("\n")
+
+#A column named is_banned was added to the "app_user" table with an integer data type and a default value 0. The is_banned columns shows
+#wheter the user is banned or not.
+#Query that will extract all comments from the "app_comment" table for banned users. You can use subqueries.
+cur.execute(
+    '''SELECT
+    *
+    FROM
+    "app_comment"
+    WHERE
+    "user_id" IN (
+        SELECT
+        "id"
+        FROM
+        "app_user"
+        WHERE
+        "is_banned"
+    )
+    ORDER BY
+    "created"'''
+)
+
+for row in cur.fetchall():
+    print(row)
+print("\n")
+
+#A column named is_banned was added to the "app_user# table with an integer data type and a default value 0. The is_banned column shows wheter the user is banned ort not.
+#Query that will remove all banned users from the database.
+cur.execute('''PRAGMA foreign_keys = ON''')
+cur.execute('''DELETE FROM "app_user" WHERE "is_banned"''')
+conn.commit()
+
+#Query that will extract total number of threads from the table "app_thread"
+cur.execute('''SELECT COUNT(*) FROM "app_thread"''')
+num_threads = cur.fetchall()[0][0]
+print(num_threads)
+print("\n")
+
+#Delete all thread from the "app_thread" table for the user with creator_id = 21.
+#Query that extracts the number of threads remaining in the "app_thread"
+cur.execute('''PRAGMA foreign_keys = ON''')
+cur.execute('''DELETE FROM "app_thread" WHERE "creator_id" = 21''')
+conn.commit()
+
+cur.execute('''SELECT COUNT(*) FROM "app_thread"''')
+num_threads = cur.fetchall()[0][0]
+print(num_threads)
+print("\n")
+
+#Remove the user from the "app_user" table with the given email address:
+#lisa46@esmartdata.org"
+#Remember to enable foreign key support (PRAGMA command)
+cur.execute('''PRAGMA foreign_keys = ON''')
+cur.execute(
+    '''DELETE FROM "app_user" WHERE "email" = "lisa46@esmartdata.org"'''
+)
+
+conn.commit()
+
 conn.close()
